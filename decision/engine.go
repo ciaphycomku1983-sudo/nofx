@@ -266,7 +266,8 @@ func buildSystemPrompt(accountEquity float64, btcEthLeverage, altcoinLeverage in
     sb.WriteString("2. 最多持仓: 3个币种（质量>数量）\n")
     sb.WriteString(fmt.Sprintf("3. 单币仓位: 山寨%.0f-%.0f U(%dx杠杆) | BTC/ETH %.0f-%.0f U(%dx杠杆)\n",
         accountEquity*0.8, accountEquity*1.5, altcoinLeverage, accountEquity*5, accountEquity*10, btcEthLeverage))
-    sb.WriteString("4. 保证金: 总使用率 ≤ 90%\n\n")
+    sb.WriteString("4. 保证金: 总使用率 ≤ 90%\n")
+    sb.WriteString("5. ⚠️ 禁止仓位叠加: 如果某币种已有持仓(多/空)，不得再次开仓同方向，必须先平仓(close_long/close_short)才能换仓\n\n")
 
     // 3. 输出格式 - 动态生成
     sb.WriteString("#输出格式\n\n")
@@ -450,6 +451,9 @@ func extractDecisions(response string) ([]Decision, error) {
     // 使用简单的字符串扫描而不是正则表达式
     jsonContent = fixMissingQuotes(jsonContent)
 
+    // 🔧 修复缺少逗号的JSON数组元素：} { -> }, {
+    jsonContent = fixMissingCommas(jsonContent)
+
     // 解析JSON
     var decisions []Decision
     if err := json.Unmarshal([]byte(jsonContent), &decisions); err != nil {
@@ -466,6 +470,65 @@ func fixMissingQuotes(jsonStr string) string {
     jsonStr = strings.ReplaceAll(jsonStr, "\u2018", "'")  // '
     jsonStr = strings.ReplaceAll(jsonStr, "\u2019", "'")  // '
     return jsonStr
+}
+
+// fixMissingCommas 修复JSON数组中缺少逗号的问题：} { -> }, {
+// 这个函数会在两个JSON对象之间插入逗号，如果它们之间只有空白字符
+func fixMissingCommas(jsonStr string) string {
+    var result strings.Builder
+    inString := false
+    escaped := false
+    
+    for i := 0; i < len(jsonStr); i++ {
+        c := jsonStr[i]
+        
+        // 处理字符串中的转义字符
+        if escaped {
+            result.WriteByte(c)
+            escaped = false
+            continue
+        }
+        
+        if c == '\\' {
+            escaped = true
+            result.WriteByte(c)
+            continue
+        }
+        
+        // 跟踪是否在字符串内
+        if c == '"' {
+            inString = !inString
+            result.WriteByte(c)
+            continue
+        }
+        
+        // 如果在字符串内，直接写入
+        if inString {
+            result.WriteByte(c)
+            continue
+        }
+        
+        // 检测到 } 后面跟着 { 的情况（中间可能有空白字符）
+        if c == '}' {
+            result.WriteByte(c)
+            
+            // 查找下一个非空白字符
+            j := i + 1
+            for j < len(jsonStr) && (jsonStr[j] == ' ' || jsonStr[j] == '\t' || jsonStr[j] == '\n' || jsonStr[j] == '\r') {
+                j++
+            }
+            
+            // 如果下一个非空白字符是 {，插入逗号
+            if j < len(jsonStr) && jsonStr[j] == '{' {
+                result.WriteByte(',')
+            }
+            continue
+        }
+        
+        result.WriteByte(c)
+    }
+    
+    return result.String()
 }
 
 // validateDecisions 验证所有决策（需要账户信息和杠杆配置）
