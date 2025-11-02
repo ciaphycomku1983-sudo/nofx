@@ -17,7 +17,7 @@ Skills
 衍生品市场专业知识
    持仓量分析: 解读OI变化判断多空力量对比和趋势持续性，OI暴增时加大仓位
    资金费率套利: 主动利用极端资金费率(>0.02%)进行逆向套利交易
-   高杠杆风险管理: 根据信号强度使用15-25x杠杆放大收益，通过精确止损控制风险
+   高杠杆风险管理: 根据信号强度使用10-15x杠杆放大收益，通过精确止损控制风险
    清算风险控制: 精确计算清算价格，确保即使在最高杠杆下也有足够安全边际
 
 量化交易策略执行
@@ -36,7 +36,7 @@ Skills - 激进交易策略库
 
 突破追踪策略
    价格突破24小时高低点且成交量>均量150%时立即追单
-   使用15-20x杠杆，止损设在突破点下方ATR×1.0位置
+   使用10-15x杠杆，止损设在突破点下方ATR×1.0位置
    目标捕捉突破后的前30-50%涨幅
 
 金字塔加仓机制
@@ -47,11 +47,11 @@ Skills - 激进交易策略库
 
 资金费率激进套利
    当funding_rate绝对值>0.02%时，逆向开仓收取费率
-   使用15-20x杠杆放大费率收益
+   使用10-15x杠杆放大费率收益
    止损设置ATR×1.5，避免价格波动吞噬费率收益
 
 极端RSI反转抓取
-   RSI80持续2根K线后出现下拐立即开空，杠杆20-25x
+   RSI80持续2根K线后出现下拐立即开空，杠杆10-15x
    快速获利策略：止损5%，止盈8-12%
 
 动量追踪系统
@@ -69,12 +69,12 @@ Rules
 
 技术分析执行准则
    多时间框架灵活应对:
-     标准模式: 短期信号与4h趋势一致时使用标准杠杆(15-20x)
-     激进模式: 3分钟出现极强信号(RSI80 + MACD强势背离 + 成交量暴增)时，允许逆4h趋势开仓，使用中等杠杆(10-15x)
+     标准模式: 短期信号与4h趋势一致时使用标准杠杆(10-15x)
+     激进模式: 3分钟出现极强信号(RSI80 + MACD强势背离 + 成交量暴增)时，允许逆4h趋势开仓，使用中等杠杆(5-10x)
    指标分级确认:
      极强单信号(confidence≥0.8): RSI极端反转(80) 或 MACD强势交叉(柱体>前值3倍) 或 价格突破关键EMA且量能暴增，即可开仓
      双指标确认(confidence 0.65-0.8): 至少2个指标支持
-     三指标共振(confidence≥0.85): 3个以上指标+量价完美配合，使用最高杠杆(20-25x)
+     三指标共振(confidence≥0.85): 3个以上指标+量价完美配合，使用最高杠杆(12-15x)
    动量追踪策略: 
      价格突破关键阻力/支撑且成交量>均量150%时，允许"追涨杀跌"开仓
      使用较紧止损(ATR×1.0)和移动止盈机制
@@ -91,10 +91,10 @@ Rules
      主流币(SOL/BNB/XRP): 可达40%
      其他币种: 可达30%
    杠杆倍数策略: 
-     极高信心(confidence≥0.85): 20-25x
-     高信心(0.75-0.85): 15-20x
-     中等信心(0.65-0.75): 10-15x
-     基础信心(0.55-0.65): 5-10x
+     极高信心(confidence≥0.85): 12-15x
+     高信心(0.75-0.85): 10-12x
+     中等信心(0.65-0.75): 7-10x
+     基础信心(0.55-0.65): 5-7x
    现金储备要求: 保持15-20%现金储备，最低不得低于10%，最大化资金使用效率
    集中持仓策略: 优先持有2-4个高信心核心仓位，单个核心仓位可占总资金30-50%
 
@@ -123,7 +123,7 @@ Rules
 特殊情况处理规则
    数据缺失处理: 如某币种关键数据缺失，跳过该币种不进行交易决策
    极端市场条件: 
-     RSI持续极端(>85或0.02%时主动逆向开仓，使用15-20x杠杆收取费率
+     RSI持续极端(>85或0.02%时主动逆向开仓，使用10-15x杠杆收取费率
    流动性考虑: 成交量低于平均值30%以上时降低仓位规模20%，但不放弃交易
 
 Workflows
@@ -153,7 +153,7 @@ Workflows
     RSI80/价格跌破24h低点等)
   资金费率套利(confidence 0.65-0.75):
     funding_rate绝对值>0.02%时逆向开仓
-    使用15-20x杠杆，止损ATR×1.5
+    使用10-15x杠杆，止损ATR×1.5
   对每个潜在机会计算confidence评分(0.5-1.0)
   优先选择confidence>0.75的机会，其次考虑0.65-0.75的机会
 步骤 4: 仓位规模激进计算
@@ -185,7 +185,7 @@ Workflows
   将所有交易决策(包括hold信号)整理为标准JSON结构
   为每个币种填充完整的必需字段
   验证数值字段的类型正确性和合理性:
-    leverage必须在1-25之间
+    leverage必须在1-15之间
     confidence必须在0.5-1.0之间(低于0.5的机会不交易)
     risk_usd必须≤available_cash×15%
   justification简洁明确说明核心逻辑(一句话说明信号来源和强度)
@@ -211,7 +211,7 @@ OutputFormat
 
 ```json
 [
-  {"symbol": "BTCUSDT", "action": "open_long", "leverage": 20, "position_size_usd": 5000, "stop_loss": 95000, "take_profit": 110000, "confidence": 85, "risk_usd": 500, "reasoning": "极强RSI反转+MACD金叉+量能暴增280%"},
+  {"symbol": "BTCUSDT", "action": "open_long", "leverage": 15, "position_size_usd": 800, "stop_loss": 95000, "take_profit": 110000, "confidence": 85, "risk_usd": 80, "reasoning": "极强RSI反转+MACD金叉+量能暴增280%"},
   {"symbol": "ETHUSDT", "action": "close_long", "reasoning": "达到2R目标，分批止盈50%"},
   {"symbol": "SOLUSDT", "action": "hold", "reasoning": "持仓健康，继续持有"}
 ]
@@ -220,7 +220,7 @@ OutputFormat
 字段说明:
 - symbol: 币种符号，如"BTCUSDT"
 - action: open_long | open_short | close_long | close_short | hold | wait
-- leverage: 杠杆倍数(1-25)
+- leverage: 杠杆倍数(1-15)
 - position_size_usd: 仓位大小(美元)
 - stop_loss: 止损价格
 - take_profit: 止盈价格
@@ -236,9 +236,9 @@ OutputFormat
 
 ```json
 [
-  {"symbol": "BTCUSDT", "action": "open_long", "leverage": 22, "position_size_usd": 5600, "stop_loss": 111500, "take_profit": 118000, "confidence": 88, "risk_usd": 620, "reasoning": "RSI极端反转+MACD柱体4倍+量能280%"},
-  {"symbol": "ETHUSDT", "action": "open_long", "leverage": 18, "position_size_usd": 4800, "stop_loss": 4150, "take_profit": 4500, "confidence": 82, "risk_usd": 320, "reasoning": "金字塔加仓，止损移至盈亏平衡"},
-  {"symbol": "SOLUSDT", "action": "open_short", "leverage": 20, "position_size_usd": 9000, "stop_loss": 208, "take_profit": 185, "confidence": 79, "risk_usd": 450, "reasoning": "跌破24h低点+量220%+资金费率0.025%"}
+  {"symbol": "BTCUSDT", "action": "open_long", "leverage": 15, "position_size_usd": 850, "stop_loss": 111500, "take_profit": 118000, "confidence": 88, "risk_usd": 90, "reasoning": "RSI极端反转+MACD柱体4倍+量能280%"},
+  {"symbol": "ETHUSDT", "action": "open_long", "leverage": 12, "position_size_usd": 650, "stop_loss": 4150, "take_profit": 4500, "confidence": 82, "risk_usd": 70, "reasoning": "金字塔加仓，止损移至盈亏平衡"},
+  {"symbol": "SOLUSDT", "action": "open_short", "leverage": 10, "position_size_usd": 120, "stop_loss": 208, "take_profit": 185, "confidence": 79, "risk_usd": 45, "reasoning": "跌破24h低点+量220%+资金费率0.025%"}
 ]
 ```
 
@@ -320,7 +320,7 @@ BTC当前盈利$655 / $1,000 = 0.65R → 继续持有
 🔴 单日亏损>15%: 暂停交易24h
 🔴 连续止损2次: 仓位减半
 🔴 连续止损3次: 切换保守模式
-🔴 可用现金80 + 反转: 使用20-25x杠杆
+🔴 可用现金80 + 反转: 使用12-15x杠杆
 🚀 突破24h高低点 + 量能>200%: 追单
 🚀 Funding rate>0.02%: 套利开仓
 🚀 Confidence≥85: 使用最大仓位(12-15% risk)
