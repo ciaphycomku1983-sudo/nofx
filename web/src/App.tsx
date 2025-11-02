@@ -668,6 +668,28 @@ function StatCard({
   );
 }
 
+// Helper function to render text with markdown code blocks
+function renderTextWithCodeBlocks(text: string) {
+  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+  const parts: { type: 'text' | 'code'; content: string; language?: string }[] = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = codeBlockRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({ type: 'text', content: text.slice(lastIndex, match.index) });
+    }
+    parts.push({ type: 'code', content: match[2], language: match[1] || 'text' });
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push({ type: 'text', content: text.slice(lastIndex) });
+  }
+
+  return parts.length === 0 ? [{ type: 'text', content: text }] : parts;
+}
+
 // Decision Card Component with CoT Trace - Binance Style
 function DecisionCard({ decision, language }: { decision: DecisionRecord; language: Language }) {
   const [showInputPrompt, setShowInputPrompt] = useState(false);
@@ -706,8 +728,16 @@ function DecisionCard({ decision, language }: { decision: DecisionRecord; langua
             <span className="text-xs">{showInputPrompt ? t('collapse', language) : t('expand', language)}</span>
           </button>
           {showInputPrompt && (
-            <div className="mt-2 rounded p-4 text-sm font-mono whitespace-pre-wrap max-h-96 overflow-y-auto" style={{ background: '#0B0E11', border: '1px solid #2B3139', color: '#EAECEF' }}>
-              {decision.input_prompt}
+            <div className="mt-2 rounded p-4 text-sm max-h-96 overflow-y-auto" style={{ background: '#0B0E11', border: '1px solid #2B3139' }}>
+              {renderTextWithCodeBlocks(decision.input_prompt).map((part, idx) => (
+                part.type === 'code' ? (
+                  <pre key={idx} className="rounded p-3 mb-2 overflow-x-auto" style={{ background: '#000', border: '1px solid #2B3139' }}>
+                    <code className="font-mono text-xs" style={{ color: '#EAECEF' }}>{part.content}</code>
+                  </pre>
+                ) : (
+                  <div key={idx} className="font-mono whitespace-pre-wrap" style={{ color: '#EAECEF' }}>{part.content}</div>
+                )
+              ))}
             </div>
           )}
         </div>
@@ -725,8 +755,16 @@ function DecisionCard({ decision, language }: { decision: DecisionRecord; langua
             <span className="text-xs">{showCoT ? t('collapse', language) : t('expand', language)}</span>
           </button>
           {showCoT && (
-            <div className="mt-2 rounded p-4 text-sm font-mono whitespace-pre-wrap max-h-96 overflow-y-auto" style={{ background: '#0B0E11', border: '1px solid #2B3139', color: '#EAECEF' }}>
-              {decision.cot_trace}
+            <div className="mt-2 rounded p-4 text-sm max-h-96 overflow-y-auto" style={{ background: '#0B0E11', border: '1px solid #2B3139' }}>
+              {renderTextWithCodeBlocks(decision.cot_trace).map((part, idx) => (
+                part.type === 'code' ? (
+                  <pre key={idx} className="rounded p-3 mb-2 overflow-x-auto" style={{ background: '#000', border: '1px solid #2B3139' }}>
+                    <code className="font-mono text-xs" style={{ color: '#EAECEF' }}>{part.content}</code>
+                  </pre>
+                ) : (
+                  <div key={idx} className="font-mono whitespace-pre-wrap" style={{ color: '#EAECEF' }}>{part.content}</div>
+                )
+              ))}
             </div>
           )}
         </div>
