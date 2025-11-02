@@ -144,15 +144,15 @@ func (t *AsterTrader) getPrecision(symbol string) (SymbolPrecision, error) {
     return SymbolPrecision{}, fmt.Errorf("未找到交易对 %s 的精度信息", symbol)
 }
 
-// roundToTickSize 将价格/数量四舍五入到tick size/step size的整数倍
+// roundToTickSize 将价格/数量向上取整到tick size/step size的整数倍
 func roundToTickSize(value float64, tickSize float64) float64 {
     if tickSize <= 0 {
         return value
     }
     // 计算有多少个tick size
     steps := value / tickSize
-    // 四舍五入到最近的整数
-    roundedSteps := math.Round(steps)
+    // 向上取整到最近的整数（确保不会变成0）
+    roundedSteps := math.Ceil(steps)
     // 乘回tick size
     return roundedSteps * tickSize
 }
@@ -568,6 +568,10 @@ func (t *AsterTrader) OpenLong(symbol string, quantity float64, leverage int) (m
         if err != nil {
             return nil, err
         }
+        // 再次验证调整后的数量是否大于0
+        if formattedQty <= 0 {
+            return nil, fmt.Errorf("调整后的数量仍为0，无法满足最小名义价值要求 %.2f USDT", minNotional)
+        }
         notionalValue = formattedQty * price
         log.Printf("  ✓ 调整后数量: %.8f, 名义价值: %.2f USDT", formattedQty, notionalValue)
     }
@@ -654,6 +658,10 @@ func (t *AsterTrader) OpenShort(symbol string, quantity float64, leverage int) (
         formattedQty, err = t.formatQuantity(symbol, formattedQty)
         if err != nil {
             return nil, err
+        }
+        // 再次验证调整后的数量是否大于0
+        if formattedQty <= 0 {
+            return nil, fmt.Errorf("调整后的数量仍为0，无法满足最小名义价值要求 %.2f USDT", minNotional)
         }
         notionalValue = formattedQty * price
         log.Printf("  ✓ 调整后数量: %.8f, 名义价值: %.2f USDT", formattedQty, notionalValue)
@@ -749,6 +757,10 @@ func (t *AsterTrader) CloseLong(symbol string, quantity float64) (map[string]int
         formattedQty, err = t.formatQuantity(symbol, formattedQty)
         if err != nil {
             return nil, err
+        }
+        // 再次验证调整后的数量是否大于0
+        if formattedQty <= 0 {
+            return nil, fmt.Errorf("调整后的数量仍为0，无法满足最小名义价值要求 %.2f USDT", minNotional)
         }
         notionalValue = formattedQty * price
         log.Printf("  ✓ 调整后数量: %.8f, 名义价值: %.2f USDT", formattedQty, notionalValue)
@@ -852,6 +864,10 @@ func (t *AsterTrader) CloseShort(symbol string, quantity float64) (map[string]in
         formattedQty, err = t.formatQuantity(symbol, formattedQty)
         if err != nil {
             return nil, err
+        }
+        // 再次验证调整后的数量是否大于0
+        if formattedQty <= 0 {
+            return nil, fmt.Errorf("调整后的数量仍为0，无法满足最小名义价值要求 %.2f USDT", minNotional)
         }
         notionalValue = formattedQty * price
         log.Printf("  ✓ 调整后数量: %.8f, 名义价值: %.2f USDT", formattedQty, notionalValue)
