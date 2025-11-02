@@ -989,21 +989,21 @@ func (t *AsterTrader) SetStopLoss(symbol string, positionSide string, quantity, 
 
     // 验证数量必须大于0
     if formattedQty <= 0 {
-        return nil, fmt.Errorf("格式化后的数量必须大于0，当前: %.8f (原始数量: %.8f)", formattedQty, quantity)
+        return fmt.Errorf("格式化后的数量必须大于0，当前: %.8f (原始数量: %.8f)", formattedQty, quantity)
     }
 
     // 确保名义价值不小于5.0 USDT（AsterDex最小要求）
     minNotional := 5.0
-    notionalValue := formattedQty * price
+    notionalValue := formattedQty * formattedPrice
     if notionalValue < minNotional {
         log.Printf("  ⚠️ 名义价值 %.2f USDT 小于最小值 %.2f USDT，自动调整", notionalValue, minNotional)
-        formattedQty = minNotional / price
+        formattedQty = minNotional / formattedPrice
         // 重新格式化调整后的数量
         formattedQty, err = t.formatQuantity(symbol, formattedQty)
         if err != nil {
-            return nil, err
+            return err
         }
-        notionalValue = formattedQty * price
+        notionalValue = formattedQty * formattedPrice
         log.Printf("  ✓ 调整后数量: %.8f, 名义价值: %.2f USDT", formattedQty, notionalValue)
     }
     // 获取精度信息
@@ -1050,21 +1050,21 @@ func (t *AsterTrader) SetTakeProfit(symbol string, positionSide string, quantity
 
     // 验证数量必须大于0
     if formattedQty <= 0 {
-        return nil, fmt.Errorf("格式化后的数量必须大于0，当前: %.8f (原始数量: %.8f)", formattedQty, quantity)
+        return fmt.Errorf("格式化后的数量必须大于0，当前: %.8f (原始数量: %.8f)", formattedQty, quantity)
     }
 
     // 确保名义价值不小于5.0 USDT（AsterDex最小要求）
     minNotional := 5.0
-    notionalValue := formattedQty * price
+    notionalValue := formattedQty * formattedPrice
     if notionalValue < minNotional {
         log.Printf("  ⚠️ 名义价值 %.2f USDT 小于最小值 %.2f USDT，自动调整", notionalValue, minNotional)
-        formattedQty = minNotional / price
+        formattedQty = minNotional / formattedPrice
         // 重新格式化调整后的数量
         formattedQty, err = t.formatQuantity(symbol, formattedQty)
         if err != nil {
-            return nil, err
+            return err
         }
-        notionalValue = formattedQty * price
+        notionalValue = formattedQty * formattedPrice
         log.Printf("  ✓ 调整后数量: %.8f, 名义价值: %.2f USDT", formattedQty, notionalValue)
     }
     // 获取精度信息
