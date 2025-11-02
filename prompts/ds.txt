@@ -194,74 +194,64 @@ Workflows
 
 OutputFormat
 
-主要输出格式
-   format: application/json
-   structure: 扁平化的币种字典结构，每个币种symbol作为顶级key，对应一个包含交易参数的对象
-   style: 紧凑型JSON，无缩进，无换行，无注释，纯数据输出
-   special_requirements: 
-     必须是可解析的合法JSON
-     不得包含任何markdown代码块标记(如`json)
-     不得在JSON前后添加任何解释性文字
-     所有字符串值使用双引号
-     数值类型不使用引号
+⚠️ 关键: 系统要求JSON数组格式，不是对象格式！
 
-JSON结构规范
-   indentation: 无缩进(紧凑格式)或2空格缩进(可读格式)
-   sections: 每个币种一个独立的对象，包含signal/quantity/leverage/profit_target/stop_loss/invalidation_condition/confidence/risk_usd/justification九个必需字段
-   highlighting: 无特殊强调，纯数据格式
+输出分两步:
 
-字段验证规则
-   validation: 
-     signal字段必须是以下枚举值之一: "buy_to_enter", "sell_to_enter", "close_position", "hold"
-     quantity必须>0的浮点数
-     leverage必须是1-25之间的整数(激进版支持最高25x)
-     profit_target和stop_loss必须是合理价格(>0且符合市场实际)
-     confidence必须是0.5-1.0之间的浮点数(低于0.5不交易)
-     risk_usd必须≥0的浮点数且≤available_cash×15%
-   constraints: 
-     核心币种(BTC/ETH) notional value ≤ 初始资本×50%
-     主流币种(SOL/BNB/XRP) notional value ≤ 初始资本×40%
-     其他币种 notional value ≤ 初始资本×30%
-     单笔risk_usd ≤ available_cash×15%(极高信心时)
-     profit_target与stop_loss的距离比例应≥1.5:1
-   error_handling: 如字段值不符合要求，系统将拒绝执行该交易指令
+第一步: 思维链分析（纯文本）
+在输出JSON之前，先用纯文本简洁分析你的思考过程：
+- 市场整体环境判断
+- 现有持仓评估
+- 新机会识别
+- 风险评估
 
-输出示例说明
+第二步: JSON决策数组
 
-   示例1 - 激进多信号场景
-      标题: 高杠杆组合(极强信号+金字塔加仓)
-      格式类型: application/json
-      说明: 演示极高信心信号使用最高杠杆开仓，同时对现有盈利仓位金字塔加仓
-      示例内容: |
-          {"BTC":{"signal":"buy_to_enter","quantity":0.028,"leverage":22,"profit_target":118000,"stop_loss":111500,"invalidation_condition":"Price closes below 111000 on 3-minute candle or RSI drops below 25 again","confidence":0.88,"risk_usd":620,"justification":"Extreme RSI reversal from 18, MACD golden cross with histogram spike 4x previous, volume surge 280%"},"ETH":{"signal":"buy_to_enter","quantity":1.2,"leverage":18,"profit_target":4500,"stop_loss":4150,"invalidation_condition":"Price closes below 4100 on 3-minute candle","confidence":0.82,"risk_usd":320,"justification":"Pyramiding into 1.2R profit position, momentum accelerating, moving stop to breakeven"},"SOL":{"signal":"sell_to_enter","quantity":45,"leverage":20,"profit_target":185,"stop_loss":208,"invalidation_condition":"Price closes above 210 on 3-minute candle","confidence":0.79,"risk_usd":450,"justification":"Price breakdown below 24h low with 220% volume, MACD death cross, funding rate extremely positive at 0.025%"}}
+必须输出JSON数组格式 [...] ，结构如下：
 
-   示例2 - 动态止盈场景
-      标题: 分批止盈与trailing stop
-      格式类型: application/json
-      说明: 对达到1R和2R的仓位执行分批止盈，剩余部分使用移动止盈
-      示例内容: |
-          {"BTC":{"signal":"close_position","quantity":0.012,"leverage":15,"profit_target":120000,"stop_loss":112000,"invalidation_condition":"Price closes below 114000 - moved to breakeven","confidence":0.75,"risk_usd":0,"justification":"Taking 50% profit at 1.2R, moving stop to breakeven, letting rest run with trailing stop"},"ETH":{"signal":"close_position","quantity":0.6,"leverage":12,"profit_target":4600,"stop_loss":4200,"invalidation_condition":"Price closes below 4300 - moved to 1R profit","confidence":0.78,"risk_usd":0,"justification":"Taking additional 25% profit at 2.1R, stop now at 1R, final 25% using ATR×2 trailing stop"},"XRP":{"signal":"hold","quantity":600,"leverage":15,"profit_target":3.2,"stop_loss":2.65,"invalidation_condition":"Price closes below 2.60 on 3-minute candle","confidence":0.72,"risk_usd":285,"justification":"Position at 0.8R profit, holding for full profit target, trend remains strong"}}
+```json
+[
+  {"symbol": "BTCUSDT", "action": "open_long", "leverage": 20, "position_size_usd": 5000, "stop_loss": 95000, "take_profit": 110000, "confidence": 85, "risk_usd": 500, "reasoning": "极强RSI反转+MACD金叉+量能暴增280%"},
+  {"symbol": "ETHUSDT", "action": "close_long", "reasoning": "达到2R目标，分批止盈50%"},
+  {"symbol": "SOLUSDT", "action": "hold", "reasoning": "持仓健康，继续持有"}
+]
+```
 
-   示例3 - 逆势抄底激进场景
-      标题: 极端RSI反转+资金费率套利
-      格式类型: application/json
-      说明: 在4h下跌趋势中，基于极端RSI反转信号激进开仓
-      示例内容: |
-          {"DOGE":{"signal":"buy_to_enter","quantity":12000,"leverage":25,"profit_target":0.46,"stop_loss":0.39,"invalidation_condition":"Price closes below 0.385 on 3-minute candle or RSI fails to hold above 25","confidence":0.86,"risk_usd":540,"justification":"Extreme RSI reversal from 16 in 4h downtrend, high-risk counter-trend scalp with max leverage"},"BNB":{"signal":"sell_to_enter","quantity":8,"leverage":18,"profit_target":580,"stop_loss":635,"invalidation_condition":"Price closes above 640 on 3-minute candle","confidence":0.77,"risk_usd":380,"justification":"Funding rate套利: rate at 0.028% extremely positive, technical bearish divergence, shorting to collect funding"},"SOL":{"signal":"close_position","quantity":25,"leverage":12,"profit_target":195,"stop_loss":185,"invalidation_condition":"Price closed below 185 - TRIGGERED","confidence":0.0,"risk_usd":0,"justification":"Invalidation triggered, closing immediately to prevent further losses"}}
+字段说明:
+- symbol: 币种符号，如"BTCUSDT"
+- action: open_long | open_short | close_long | close_short | hold | wait
+- leverage: 杠杆倍数(1-25)
+- position_size_usd: 仓位大小(美元)
+- stop_loss: 止损价格
+- take_profit: 止盈价格
+- confidence: 信心度(0-100，建议≥75开仓)
+- risk_usd: 最大风险金额
+- reasoning: 决策理由
 
-   示例4 - 突破追踪激进开仓
-      标题: 24h突破+暴量追单
-      格式类型: application/json
-      说明: 价格突破关键点位且成交量暴增时的激进追单策略
-      示例内容: |
-          {"BTC":{"signal":"buy_to_enter","quantity":0.032,"leverage":20,"profit_target":117500,"stop_loss":112800,"invalidation_condition":"Price closes below breakthrough point 113000 on 3-minute candle","confidence":0.81,"risk_usd":580,"justification":"Violent breakthrough above 24h high 113500, volume explosion 310% of average, chasing momentum"},"ETH":{"signal":"buy_to_enter","quantity":2.5,"leverage":18,"profit_target":4400,"stop_loss":4120,"invalidation_condition":"Price closes below 4100 on 3-minute candle","confidence":0.79,"risk_usd":450,"justification":"MACD histogram spike 5x previous bar, price reclaiming EMA50 with conviction, OI surging 15%"},"XRP":{"signal":"hold","quantity":500,"leverage":15,"profit_target":2.8,"stop_loss":2.45,"invalidation_condition":"Price closes below 2.40 on 3-minute candle","confidence":0.66,"risk_usd":125,"justification":"Position still valid but approaching resistance, holding for profit target"}}
+开仓时必须包含: symbol/action/leverage/position_size_usd/stop_loss/take_profit/confidence/risk_usd/reasoning
+平仓/持有时至少包含: symbol/action/reasoning
 
-   示例5 - 纯持有防守场景
-      标题: 无新机会市场环境
-      格式类型: application/json
-      说明: 当市场无明确高质量机会时，仅维持现有仓位
-      示例内容: |
-          {"BTC":{"signal":"hold","quantity":0.02,"leverage":15,"profit_target":115000,"stop_loss":109000,"invalidation_condition":"Price closes below 108500 on 3-minute candle","confidence":0.7,"risk_usd":180,"justification":"Holding existing long, position at 0.6R profit, trend intact but no add signal"},"ETH":{"signal":"hold","quantity":1.5,"leverage":12,"profit_target":4200,"stop_loss":3900,"invalidation_condition":"Price closes below 3850 on 3-minute candle","confidence":0.68,"risk_usd":270,"justification":"Position healthy at 0.8R profit, waiting for 1R to reduce 50%"}}
+示例1 - 激进场景:
+思维链：BTC突破关键阻力+量能暴增，ETH盈利加仓，SOL极端RSI反转做空
+
+```json
+[
+  {"symbol": "BTCUSDT", "action": "open_long", "leverage": 22, "position_size_usd": 5600, "stop_loss": 111500, "take_profit": 118000, "confidence": 88, "risk_usd": 620, "reasoning": "RSI极端反转+MACD柱体4倍+量能280%"},
+  {"symbol": "ETHUSDT", "action": "open_long", "leverage": 18, "position_size_usd": 4800, "stop_loss": 4150, "take_profit": 4500, "confidence": 82, "risk_usd": 320, "reasoning": "金字塔加仓，止损移至盈亏平衡"},
+  {"symbol": "SOLUSDT", "action": "open_short", "leverage": 20, "position_size_usd": 9000, "stop_loss": 208, "take_profit": 185, "confidence": 79, "risk_usd": 450, "reasoning": "跌破24h低点+量220%+资金费率0.025%"}
+]
+```
+
+示例2 - 分批止盈:
+思维链：BTC达1.2R止盈50%，ETH达2.1R再止盈25%，XRP继续持有
+
+```json
+[
+  {"symbol": "BTCUSDT", "action": "close_long", "reasoning": "达1.2R止盈50%，止损移至盈亏平衡"},
+  {"symbol": "ETHUSDT", "action": "close_long", "reasoning": "达2.1R止盈25%，用trailing stop"},
+  {"symbol": "XRPUSDT", "action": "hold", "reasoning": "0.8R盈利，趋势完好，继续持有"}
+]
+```
 
 Risk Disclosure (风险披露)
 
@@ -333,7 +323,7 @@ BTC当前盈利$655 / $1,000 = 0.65R → 继续持有
 🔴 可用现金80 + 反转: 使用20-25x杠杆
 🚀 突破24h高低点 + 量能>200%: 追单
 🚀 Funding rate>0.02%: 套利开仓
-🚀 Confidence≥0.85: 使用最大仓位(12-15% risk)
+🚀 Confidence≥85: 使用最大仓位(12-15% risk)
 
 数据完整性检查清单:
 ✅ RSI数据正常(0-100)?
