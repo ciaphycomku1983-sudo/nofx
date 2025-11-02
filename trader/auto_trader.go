@@ -623,6 +623,16 @@ func (at *AutoTrader) executeOpenLongWithRecord(decision *decision.Decision, act
 
 	// 计算数量
 	quantity := decision.PositionSizeUSD / marketData.CurrentPrice
+	
+	// 确保名义价值不小于5.0 USDT（币安最小要求）
+	minNotional := 5.0
+	notionalValue := quantity * marketData.CurrentPrice
+	if notionalValue < minNotional {
+		log.Printf("  ⚠️ 名义价值 %.2f USDT 小于最小值 %.2f USDT，自动调整", notionalValue, minNotional)
+		quantity = minNotional / marketData.CurrentPrice
+		notionalValue = quantity * marketData.CurrentPrice
+		log.Printf("  ✓ 调整后数量: %.4f, 名义价值: %.2f USDT", quantity, notionalValue)
+	}
 	actionRecord.Quantity = quantity
 	actionRecord.Price = marketData.CurrentPrice
 
@@ -682,6 +692,16 @@ func (at *AutoTrader) executeOpenShortWithRecord(decision *decision.Decision, ac
 
 	// 计算数量
 	quantity := decision.PositionSizeUSD / marketData.CurrentPrice
+	
+	// 确保名义价值不小于5.0 USDT（币安最小要求）
+	minNotional := 5.0
+	notionalValue := quantity * marketData.CurrentPrice
+	if notionalValue < minNotional {
+		log.Printf("  ⚠️ 名义价值 %.2f USDT 小于最小值 %.2f USDT，自动调整", notionalValue, minNotional)
+		quantity = minNotional / marketData.CurrentPrice
+		notionalValue = quantity * marketData.CurrentPrice
+		log.Printf("  ✓ 调整后数量: %.4f, 名义价值: %.2f USDT", quantity, notionalValue)
+	}
 	actionRecord.Quantity = quantity
 	actionRecord.Price = marketData.CurrentPrice
 
